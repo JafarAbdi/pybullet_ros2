@@ -1,8 +1,8 @@
 ci:
-    skip: [format-xmllint, markdownlint, actionlint, sourcery]
+    skip: [format-xmllint, markdownlint, actionlint]
 
 default_language_version:
-  python: python3.11
+  python: python3.10
   ruby: 2.7.2
 
 repos:
@@ -48,14 +48,6 @@ repos:
     hooks:
       - id: ruff
         args: ['--show-source', '--fix', '--config', 'pyproject.toml']
-  - repo: https://github.com/sourcery-ai/sourcery
-    rev: v1.3.0
-    hooks:
-    - id: sourcery
-      # The best way to use Sourcery in a pre-commit hook:
-      # * review only changed lines:
-      # * omit the summary
-      args: [--diff=git diff HEAD, --enable=gpsg, --enable=default, --no-summary]
   # Spelling
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.4
@@ -80,7 +72,8 @@ repos:
   - repo: https://github.com/markdownlint/markdownlint
     rev: v0.12.0
     hooks:
-    - id: markdownlint
+      - id: markdownlint
+        args: ['--rules', '~MD013']
   # Github Actions
   - repo: https://github.com/s-weigand/pre-commit_mirrors-actionlint
     rev: v1.6.24
