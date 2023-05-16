@@ -4,7 +4,7 @@
   <name>pybullet_ros2</name>
   <version>0.0.0</version>
   <description>A ROS2 interface to PyBullet</description>
-  <maintainer email="jafar.uruc@gmail.com">Jafar Uruç</maintainer>
+  <maintainer email="jafar.uruc@gmail.com">Jafar Uruc</maintainer>
   <license>BSD</license>
   <url type="website">https://github.com/JafarAbdi/pybullet_ros2</url>
   <url type="bugtracker">https://github.com/JafarAbdi/pybullet_ros2/issues</url>
