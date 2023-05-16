@@ -1,5 +1,6 @@
 """Setup script for PyBullet ROS2 package."""
 
+
 from setuptools import setup
 
 package_name = "pybullet_ros2"
@@ -9,8 +10,11 @@ setup(
     version="0.0.0",
     packages=[package_name],
     data_files=[
-        ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
-        ("share/" + package_name, ["package.xml"]),
+        (
+            "share/ament_index/resource_index/packages",
+            [f"resource/{package_name}"],
+        ),
+        (f"share/{package_name}", ["package.xml"]),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
