@@ -1,0 +1,88 @@
+ci:
+    skip: [format-xmllint, markdownlint, actionlint, sourcery]
+
+default_language_version:
+  python: python3.11
+  ruby: 2.7.2
+
+repos:
+  # Standard hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-byte-order-marker
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-vcs-permalinks
+      - id: check-xml
+      - id: check-yaml
+        args: ['--allow-multiple-documents']
+      - id: debug-statements
+      - id: destroyed-symlinks
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: fix-byte-order-marker
+      - id: forbid-new-submodules
+      - id: mixed-line-ending
+      - id: name-tests-test
+      - id: pretty-format-json
+        args: ['--autofix']
+      - id: requirements-txt-fixer
+      - id: sort-simple-yaml
+      - id: trailing-whitespace
+  # Python
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.267
+    hooks:
+      - id: ruff
+        args: ['--show-source', '--fix', '--config', 'pyproject.toml']
+  - repo: https://github.com/sourcery-ai/sourcery
+    rev: v1.3.0
+    hooks:
+    - id: sourcery
+      # The best way to use Sourcery in a pre-commit hook:
+      # * review only changed lines:
+      # * omit the summary
+      args: [--diff=git diff HEAD, --enable=gpsg, --enable=default, --no-summary]
+  # Spelling
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.4
+    hooks:
+      - id: codespell
+        args: ['--write-changes',
+               '--ignore-words=.github/codespell/words',
+               '--exclude-file=.github/codespell/ignorelines',
+               '--skip=.github/cspell/*.txt']
+  # Docker
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.1-beta
+    hooks:
+      - id: hadolint-docker
+        args: ['--config', '.github/hadolint/hadolint.yaml']
+  # XML
+  - repo: https://github.com/lsst-ts/pre-commit-xmllint
+    rev: 6f36260b537bf9a42b6ea5262c915ae50786296e
+    hooks:
+      - id: format-xmllint
+  # Markdown
+  - repo: https://github.com/markdownlint/markdownlint
+    rev: v0.12.0
+    hooks:
+    - id: markdownlint
+  # Github Actions
+  - repo: https://github.com/s-weigand/pre-commit_mirrors-actionlint
+    rev: v1.6.24
+    hooks:
+      - id: actionlint

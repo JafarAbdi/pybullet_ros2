@@ -1,0 +1,6 @@
+# Used with vcstool, users can download and source of all packages in this.
+repositories:
+  pybullet_ros2:
+     type: git
+     url: git@github.com:JafarAbdi/pybullet_ros2.git
+     version: main
