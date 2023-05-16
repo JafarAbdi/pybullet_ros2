@@ -80,7 +80,8 @@ repos:
   - repo: https://github.com/markdownlint/markdownlint
     rev: v0.12.0
     hooks:
-    - id: markdownlint
+      - id: markdownlint
+        args: ['--rules', '~MD013']
   # Github Actions
   - repo: https://github.com/s-weigand/pre-commit_mirrors-actionlint
     rev: v1.6.24

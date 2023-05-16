@@ -1,3 +1,5 @@
+"""Setup script for PyBullet ROS2 package."""
+
 from setuptools import setup
 
 package_name = "pybullet_ros2"
