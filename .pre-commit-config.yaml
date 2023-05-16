@@ -2,7 +2,7 @@ ci:
     skip: [format-xmllint, markdownlint, actionlint, sourcery]
 
 default_language_version:
-  python: python3.11
+  python: python3.10
   ruby: 2.7.2
 
 repos:
