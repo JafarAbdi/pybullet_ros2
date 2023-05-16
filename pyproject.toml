@@ -106,6 +106,6 @@ ignore = ["E501"]
 # TCH003: typing-only-standard-library-import
 extend-ignore = ["TCH003", "ANN002", "ANN003", "ANN101", "G004"]
 exclude = ["cookiecutter", "python"]
-target-version = "py311"
+target-version = "py310"
 [tool.ruff.pydocstyle]
 convention = "google"

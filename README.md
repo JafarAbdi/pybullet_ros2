@@ -2,7 +2,6 @@
 
 Description: A ROS2 interface to PyBullet
 
-
 [![Build Status](https://github.com/JafarAbdi/pybullet_ros2/actions/workflows/build_and_test.yaml/badge.svg)](https://github.com/JafarAbdi/pybullet_ros2/actions/workflows/build_and_test.yaml)
 
 ## Documentation
