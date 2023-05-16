@@ -27,7 +27,7 @@ pre-commit install
 
 ## Testing and Linting
 
-To test the pacakges in pybullet_ros2, use the following command with [colcon](https://colcon.readthedocs.io/en/released/).
+To test the packages in pybullet_ros2, use the following command with [colcon](https://colcon.readthedocs.io/en/released/).
 
     export TEST_PACKAGES="PROJECT_PACKAGE_NAMES"
     colcon build --packages-up-to ${TEST_PACKAGES}
