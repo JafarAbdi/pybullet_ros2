@@ -54,8 +54,7 @@ class PyBulletNode(Node):
         p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0)
         p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
         p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
-        # This slows down the image creation only for mesa
-        p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, 0)
+
         p.resetSimulation()
         p.setGravity(0, 0, -9.81)
         self.robot_id = p.loadURDF(
@@ -119,17 +118,14 @@ class PyBulletNode(Node):
                 raise ValueError(
                     msg,
                 )
-            # TODO: Rename
-            camera_translation_from_link: Sequence[float] = (0.0, 0.0, 0.2)
-            camera_rotation_from_link: Sequence[float] = (0, 0, 0, 1)
 
             self._cameras.append(
                 MountedCamera(
                     p,
                     self.robot_id,
                     self._link_names_to_ids[camera.frame_name],
-                    camera_translation_from_link,
-                    camera_rotation_from_link,
+                    camera.translation_from_link,
+                    camera.rotation_from_link,
                     (camera.width, camera.height),
                     camera.field_of_view,
                 ),

@@ -45,9 +45,7 @@ def normalized_robot_description(file: Path | str):
 
 @dataclass(slots=True)
 class Camera:
-    # Required
     name: str
-    # Required
     frame_name: str
     image_topic_name: str
     camera_info_topic_name: str
@@ -150,22 +148,13 @@ class PybulletConfig:
                 )
             )
 
-        joint_states_topic_name = "pybullet_joint_states"
-        if (
-            joint_states_topic_name_tag := pybullet_tag.find("joint_states_topic_name")
-        ) is not None:
-            joint_states_topic_name = joint_states_topic_name_tag.text
-        joint_commands_topic_name = "pybullet_joint_commands"
-        if (
-            joint_commands_topic_name_tag := pybullet_tag.find(
-                "joint_commands_topic_name",
-            )
-        ) is not None:
-            joint_commands_topic_name = joint_commands_topic_name_tag.text
-
         return cls(
             cameras=cameras,
-            joint_states_topic_name=joint_states_topic_name,
-            joint_commands_topic_name=joint_commands_topic_name,
+            joint_states_topic_name=get_tag(
+                pybullet_tag, "joint_states_topic_name", "pybullet_joint_states"
+            ),
+            joint_commands_topic_name=get_tag(
+                pybullet_tag, "joint_commands_topic_name", "pybullet_joint_commands"
+            ),
             robot_description=normalized_robot_description(robot_description),
         )
