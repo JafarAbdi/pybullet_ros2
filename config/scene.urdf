@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<?xml-model href="https://raw.githubusercontent.com/ros/urdfdom/master/xsd/urdf.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<robot name="panda">
+  <link name="table">
+    <visual>
+      <geometry>
+        <box size="0.8 1.2 0.4" />
+      </geometry>
+      <material name="">
+        <color rgba="1.0 1.0 0.0 1.0" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.8 1.2 0.4" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="box1">
+    <visual>
+      <origin xyz="0.0 0.0 0.4" rpy="0.0 0.0 0.0" />
+      <geometry>
+        <box size="0.05 0.05 0.05" />
+      </geometry>
+      <material name="">
+        <color rgba="1.0 0.0 0.0 1.0" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.4" rpy="0.0 0.0 0.0" />
+      <geometry>
+        <box size="0.05 0.05 0.05" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="box2">
+    <visual>
+      <origin xyz="0.0 0.1 0.4" rpy="0.0 0.0 0.0" />
+      <geometry>
+        <box size="0.05 0.05 0.05" />
+      </geometry>
+      <material name="">
+        <color rgba="0.0 1.0 0.0 1.0" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.4" rpy="0.0 0.0 0.0" />
+      <geometry>
+        <box size="0.05 0.05 0.05" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="box3">
+    <visual>
+      <origin xyz="0.1 0.1 0.4" rpy="0.0 0.0 0.0" />
+      <geometry>
+        <box size="0.05 0.05 0.05" />
+      </geometry>
+      <material name="">
+        <color rgba="0.0 0.0 1.0 1.0" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.4" rpy="0.0 0.0 0.0" />
+      <geometry>
+        <box size="0.05 0.05 0.05" />
+      </geometry>
+    </collision>
+  </link>
+</robot>

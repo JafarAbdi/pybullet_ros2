@@ -5,11 +5,12 @@
   <version>0.0.0</version>
   <description>A ROS2 interface to PyBullet</description>
   <maintainer email="jafar.uruc@gmail.com">Jafar Uruc</maintainer>
-  <license>BSD</license>
+  <license>BSD-3-Clause</license>
   <url type="website">https://github.com/JafarAbdi/pybullet_ros2</url>
   <url type="bugtracker">https://github.com/JafarAbdi/pybullet_ros2/issues</url>
   <url type="repository">https://github.com/JafarAbdi/pybullet_ros2/</url>
   <depend>rclpy</depend>
+  <exec_depend>python3-pybullet-pip</exec_depend>
   <test_depend>ament_copyright</test_depend>
   <test_depend>python3-pytest</test_depend>
   <export>
