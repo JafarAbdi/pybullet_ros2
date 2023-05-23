@@ -17,12 +17,9 @@ jobs:
       fail-fast: false
       matrix:
         env:
-          - CI_NAME: build-and-test-humble
-            ROS_DISTRO: humble
-          - CI_NAME: build-and-test-rolling
-            ROS_DISTRO: rolling
-          - CI_NAME: build-and-test-iron
-            ROS_DISTRO: iron
+          - ROS_DISTRO: humble
+          - ROS_DISTRO: rolling
+          - ROS_DISTRO: iron
 
     env:
       ROS_REPO: main
