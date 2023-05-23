@@ -1,3 +1,5 @@
+"""Launch file for the demo."""
+
 from ament_index_python.packages import (
     get_package_share_path,
 )
@@ -6,10 +8,12 @@ from launch_ros.substitutions import FindPackageShare
 from moveit_configs_utils import MoveItConfigsBuilder
 
 from launch import LaunchDescription
-from launch.substitutions import PathJoinSubstitution
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 
 
-def generate_launch_description():
+def generate_launch_description() -> LaunchDescription:
+    """Generate launch description."""
     moveit_config = (
         MoveItConfigsBuilder("moveit_resources_panda")
         .robot_description(
@@ -29,7 +33,10 @@ def generate_launch_description():
     pybullet_node = Node(
         package="pybullet_ros2",
         executable="pybullet_ros2_node",
-        parameters=[moveit_config.robot_description],
+        parameters=[
+            moveit_config.robot_description,
+            {"enable_gui": LaunchConfiguration("enable_gui")},
+        ],
     )
     # Start the actual move_group node/action server
     move_group_node = Node(
@@ -120,13 +127,18 @@ def generate_launch_description():
     return LaunchDescription(
         [
             pybullet_node,
-            # rviz_node,
+            rviz_node,
             static_tf_node,
             robot_state_publisher,
-            # move_group_node,
+            move_group_node,
             ros2_control_node,
             joint_state_broadcaster_spawner,
             panda_arm_controller_spawner,
             panda_hand_controller_spawner,
+            DeclareLaunchArgument(
+                "enable_gui",
+                default_value="true",
+                description="Whether to start Pybullet GUI",
+            ),
         ],
     )

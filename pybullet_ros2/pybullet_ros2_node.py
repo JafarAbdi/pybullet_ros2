@@ -1,24 +1,26 @@
-#!/usr/bin/env python3
+"""A ROS 2 node that runs a pybullet simulation."""
 
+from dataclasses import dataclass
 from threading import Thread
-import time
 from typing import Final
-import pybullet_data
 
 import numpy as np
-import pybullet as p
+import pybullet
+import pybullet_data
 import rclpy
 from cv_bridge import CvBridge
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
+from rclpy.publisher import Publisher
 from rclpy.qos import qos_profile_system_default
-from sensor_msgs.msg import CameraInfo, Image, JointState
+from sensor_msgs.msg import Image, JointState, PointCloud2, PointField
 
-from pybullet_ros2.sim_camera import MountedCamera
-from pybullet_ros2.utils import PybulletConfig
-import pkgutil
-
+from pybullet_ros2.sim_camera import (
+    CameraMode,
+    MountedCamera,
+)
+from pybullet_ros2.utils import CameraConfig, PybulletConfig
 
 JOINT_STATE_POSITION_INDEX: Final = 0
 JOINT_STATE_VELOCITY_INDEX: Final = 1
@@ -26,196 +28,237 @@ JOINT_INFO_NAME_INDEX: Final = 1
 JOINT_INFO_LINK_NAME_INDEX: Final = 12
 
 
+@dataclass(slots=True)
+class Camera:
+    """A class that represents a pybullet camera."""
+
+    config: CameraConfig
+    mounted_camera: MountedCamera
+    publishers: dict[CameraMode, Publisher]
+
+
 class PyBulletNode(Node):
+    """A ROS 2 node that will publish joint states and images from a pybullet simulation."""
+
     def __init__(self) -> None:
+        """Initialize the node and the pybullet simulation."""
         super().__init__("pybullet_node")
         self.declare_parameter(
             "robot_description",
             descriptor=ParameterDescriptor(type=ParameterType.PARAMETER_STRING),
         )
+        self.declare_parameter(
+            "enable_gui",
+            descriptor=ParameterDescriptor(type=ParameterType.PARAMETER_BOOL),
+        )
 
-        self.pybullet_config = PybulletConfig.from_robot_description(
+        pybullet_config = PybulletConfig.from_robot_description(
             self.get_parameter("robot_description").value,
         )
 
-        # use cv_bridge ros to convert cv matrix to ros format
         self.image_bridge = CvBridge()
-        # This gives ~124HZ https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/examples/eglRenderTest.py
-        p.connect(p.GUI)
-        # p.setAdditionalSearchPath(pybullet_data.getDataPath())
+        if self.get_parameter("enable_gui").value:
+            pybullet.connect(pybullet.GUI)
+            pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())
+        else:
+            pybullet.connect(pybullet.DIRECT)
+            # This gives ~124HZ https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/examples/eglRenderTest.py
+            import pkgutil
 
-        # egl = pkgutil.get_loader("eglRenderer")
-        # if egl:
-        #     pluginId = p.loadPlugin(egl.get_filename(), "_eglRendererPlugin")
-        # else:
-        #     pluginId = p.loadPlugin("eglRendererPlugin")
-        # print("pluginId=", pluginId)
-        p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-        p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0)
-        p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
-        p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
+            egl = pkgutil.find_loader("eglRenderer")
+            egl = pkgutil.get_loader("eglRenderer")
 
-        p.resetSimulation()
-        p.setGravity(0, 0, -9.81)
-        self.robot_id = p.loadURDF(
-            self.pybullet_config.robot_description,
+            pybullet.setAdditionalSearchPath(pybullet_data.getDataPath())
+            pybullet.loadPlugin(egl.get_filename(), "_eglRendererPlugin")
+            pybullet.configureDebugVisualizer(pybullet.COV_ENABLE_RENDERING, 0)
+
+        pybullet.configureDebugVisualizer(pybullet.COV_ENABLE_GUI, 0)
+        pybullet.configureDebugVisualizer(
+            pybullet.COV_ENABLE_SEGMENTATION_MARK_PREVIEW,
+            0,
+        )
+        pybullet.configureDebugVisualizer(pybullet.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
+        pybullet.configureDebugVisualizer(pybullet.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
+
+        pybullet.resetSimulation()
+        pybullet.setGravity(0, 0, -9.81)
+        self.robot_id = pybullet.loadURDF(
+            pybullet_config.robot_description,
             useFixedBase=True,
         )
-        p.setAdditionalSearchPath(pybullet_data.getDataPath())
-        p.loadURDF("plane_transparent.urdf", useMaximalCoordinates=True)
-        ### DEMO ###
-        shift = [0, -0.02, 0]
-        meshScale = [0.1, 0.1, 0.1]
-        # the visual shape and collision shape can be re-used by all createMultiBody instances (instancing)
-        visualShapeId = p.createVisualShape(
-            shapeType=p.GEOM_MESH,
-            fileName="duck.obj",
-            rgbaColor=[1, 1, 1, 1],
-            specularColor=[0.4, 0.4, 0],
-            visualFramePosition=shift,
-            meshScale=meshScale,
-        )
-        collisionShapeId = p.createCollisionShape(
-            shapeType=p.GEOM_MESH,
-            fileName="duck_vhacd.obj",
-            collisionFramePosition=shift,
-            meshScale=meshScale,
-        )
+        pybullet.loadURDF("plane.urdf")
 
-        rangex = 3
-        rangey = 3
-        for i in range(rangex):
-            for j in range(rangey):
-                p.createMultiBody(
-                    baseMass=1,
-                    baseInertialFramePosition=[0, 0, 0],
-                    baseCollisionShapeIndex=collisionShapeId,
-                    baseVisualShapeIndex=visualShapeId,
-                    basePosition=[
-                        0.5 + ((-rangex / 2) + i) * meshScale[0] * 2,
-                        (-rangey / 2 + j) * meshScale[1] * 2,
-                        0,
-                    ],
-                    useMaximalCoordinates=True,
-                )
-        ### DEMO ###
         self._joint_names_to_ids = {}
         self._link_names_to_ids = {}
-        for joint_index in range(p.getNumJoints(self.robot_id)):
-            joint_info = p.getJointInfo(self.robot_id, joint_index)
+        for joint_index in range(pybullet.getNumJoints(self.robot_id)):
+            joint_info = pybullet.getJointInfo(self.robot_id, joint_index)
             self._joint_names_to_ids[
                 joint_info[JOINT_INFO_NAME_INDEX].decode("utf-8")
             ] = joint_index
             self._link_names_to_ids[
                 joint_info[JOINT_INFO_LINK_NAME_INDEX].decode("utf-8")
             ] = joint_index
-        self._cameras = []
-        self._camera_image_publishers = []
-        self._camera_info_publishers = []
-        for camera in self.pybullet_config.cameras:
-            if self._link_names_to_ids.get(camera.frame_name) is None:
-                msg = f"Camera frame {camera.frame_name} does not exist in URDF"
-                raise ValueError(
-                    msg,
-                )
 
-            self._cameras.append(
-                MountedCamera(
-                    p,
-                    self.robot_id,
-                    self._link_names_to_ids[camera.frame_name],
-                    camera.translation_from_link,
-                    camera.rotation_from_link,
-                    (camera.width, camera.height),
-                    camera.field_of_view,
-                ),
-            )
-            self._camera_image_publishers.append(
-                self.create_publisher(
-                    Image,
-                    f"/{camera.name}/{camera.image_topic_name}",
-                    qos_profile=qos_profile_system_default,
-                ),
-            )
-            self._camera_info_publishers.append(
-                self.create_publisher(
-                    CameraInfo,
-                    f"/{camera.name}/{camera.camera_info_topic_name}",
-                    qos_profile=qos_profile_system_default,
-                ),
-            )
-
+        self._last_joint_command = None
         self.joint_state_publisher = self.create_publisher(
             JointState,
-            self.pybullet_config.joint_states_topic_name,
+            pybullet_config.joint_states_topic_name,
             10,
         )
         self.joint_command_subscriber = self.create_subscription(
             JointState,
-            self.pybullet_config.joint_commands_topic_name,
+            pybullet_config.joint_commands_topic_name,
             self.joint_command_callback,
             10,
         )
+        self._cameras = []
+        for camera_config in pybullet_config.cameras:
+            if self._link_names_to_ids.get(camera_config.frame_name) is None:
+                msg = f"Camera frame {camera_config.frame_name} does not exist in URDF"
+                raise ValueError(
+                    msg,
+                )
+            publishers = {}
+            for camera_mode in camera_config.modes:
+                match camera_mode:
+                    case CameraMode.RGB:
+                        publishers[CameraMode.RGB] = self.create_publisher(
+                            Image,
+                            f"/{camera_config.name}/color/image_raw",
+                            qos_profile=qos_profile_system_default,
+                        )
+                    case CameraMode.RGBD:
+                        publishers[CameraMode.RGB] = self.create_publisher(
+                            Image,
+                            f"/{camera_config.name}/color/image_raw",
+                            qos_profile=qos_profile_system_default,
+                        )
+                        publishers[CameraMode.DEPTH] = self.create_publisher(
+                            Image,
+                            f"/{camera_config.name}/depth/image_rect_raw",
+                            qos_profile=qos_profile_system_default,
+                        )
+                    case CameraMode.DEPTH:
+                        publishers[CameraMode.DEPTH] = self.create_publisher(
+                            Image,
+                            f"/{camera_config.name}/depth/image_rect_raw",
+                            qos_profile=qos_profile_system_default,
+                        )
+                    case CameraMode.POINTCLOUD_ROBOT_FRAME:
+                        publishers[
+                            CameraMode.POINTCLOUD_ROBOT_FRAME
+                        ] = self.create_publisher(
+                            PointCloud2,
+                            f"/{camera_config.name}/depth/color/points",
+                            qos_profile=qos_profile_system_default,
+                        )
 
-        self._last_joint_command = None
+            self._cameras.append(
+                Camera(
+                    config=camera_config,
+                    mounted_camera=MountedCamera(
+                        pybullet,
+                        self.robot_id,
+                        self._link_names_to_ids[camera_config.frame_name],
+                        camera_config.translation_from_link,
+                        camera_config.rotation_from_link,
+                        (camera_config.width, camera_config.height),
+                        camera_config.field_of_view,
+                    ),
+                    publishers=publishers,
+                ),
+            )
 
-    def step(self):
+    def step(self) -> None:
+        """Set the last commanded joint state and step the simulation forward one step then publish the state + images."""
         rclpy.spin_once(self, timeout_sec=0.0)
         if self._last_joint_command is not None:
-            for joint_name, _joint_index in self._joint_names_to_ids.items():
-                joint_indices = []
-                joint_positions = []
-                for joint_name, joint_position in zip(
-                    self._last_joint_command.name,
-                    self._last_joint_command.position,
-                ):
-                    joint_indices.append(self._joint_names_to_ids[joint_name])
-                    joint_positions.append(joint_position)
-                p.setJointMotorControlArray(
-                    self.robot_id,
-                    joint_indices,
-                    p.POSITION_CONTROL,
-                    joint_positions,
-                )
-        # TODO: Publish clock?
-        p.stepSimulation()
+            joint_indices = []
+            joint_positions = []
+            for joint_name, joint_position in zip(
+                self._last_joint_command.name,
+                self._last_joint_command.position,
+                strict=True,
+            ):
+                joint_indices.append(self._joint_names_to_ids[joint_name])
+                joint_positions.append(joint_position)
+            pybullet.setJointMotorControlArray(
+                self.robot_id,
+                joint_indices,
+                pybullet.POSITION_CONTROL,
+                joint_positions,
+            )
+        pybullet.stepSimulation()
         msg = JointState()
         msg.header.stamp = self.get_clock().now().to_msg()
         for joint_name, joint_index in self._joint_names_to_ids.items():
             msg.name.append(joint_name)
-            joint_state = p.getJointState(self.robot_id, joint_index)
+            joint_state = pybullet.getJointState(self.robot_id, joint_index)
             msg.position.append(joint_state[JOINT_STATE_POSITION_INDEX])
             msg.velocity.append(joint_state[JOINT_STATE_VELOCITY_INDEX])
         self.joint_state_publisher.publish(msg)
 
-        for camera, mounted_camera, image_publisher, _camera_info_publisher in zip(
-            self.pybullet_config.cameras,
-            self._cameras,
-            self._camera_image_publishers,
-            self._camera_info_publishers,
-        ):
-            image_msg = Image()
-            image_msg.header.stamp = self.get_clock().now().to_msg()
-            image_msg.header.frame_id = camera.frame_name
-            image_msg.height = camera.height
-            image_msg.width = camera.width
-            image_msg.encoding = "rgb8"
-            image_msg.is_bigendian = False
-            image_msg.step = camera.width * 3
-            start = time.time()
-            image_msg.data = self.image_bridge.cv2_to_imgmsg(
-                mounted_camera.render_image().astype(np.uint8),
-            ).data
-            self.get_logger().error(f"Time taken for image: {time.time() - start}")
-            image_publisher.publish(image_msg)
+        for camera in self._cameras:
+            rgb_image, depth, point_cloud = camera.mounted_camera.render_image()
+            for camera_mode, publisher in camera.publishers.items():
+                match camera_mode:
+                    case CameraMode.RGB:
+                        image_msg = self.image_bridge.cv2_to_imgmsg(
+                            rgb_image.astype(np.uint8),
+                            "rgb8",
+                        )
+                        image_msg.header.stamp = self.get_clock().now().to_msg()
+                        image_msg.header.frame_id = camera.config.frame_name
+                        publisher.publish(image_msg)
+                    case CameraMode.DEPTH:
+                        image_msg = self.image_bridge.cv2_to_imgmsg(depth)
+                        image_msg.header.stamp = self.get_clock().now().to_msg()
+                        image_msg.header.frame_id = camera.config.frame_name
+                        publisher.publish(image_msg)
+                    case CameraMode.POINTCLOUD_ROBOT_FRAME:
+                        point_cloud_msg = PointCloud2()
+                        point_cloud_msg.header.stamp = self.get_clock().now().to_msg()
+                        point_cloud_msg.header.frame_id = "panda_link0"
+                        point_cloud_msg.height = 1
+                        point_cloud_msg.width = (
+                            camera.config.width * camera.config.height
+                        )
+                        point_cloud_msg.is_dense = True
+                        point_cloud_msg.is_bigendian = False
+                        point_cloud_msg.point_step = 12
+                        point_cloud_msg.row_step = (
+                            camera.config.width * point_cloud_msg.point_step
+                        )
+                        point_cloud_msg.fields = [
+                            PointField(
+                                name="x",
+                                offset=0,
+                                datatype=PointField.FLOAT32,
+                                count=1,
+                            ),
+                            PointField(
+                                name="y",
+                                offset=4,
+                                datatype=PointField.FLOAT32,
+                                count=1,
+                            ),
+                            PointField(
+                                name="z",
+                                offset=8,
+                                datatype=PointField.FLOAT32,
+                                count=1,
+                            ),
+                        ]
+                        point_cloud_msg.data = point_cloud.astype(np.float32).tobytes()
+                        publisher.publish(point_cloud_msg)
 
-            # Copilot generated this :D
-
-    def joint_command_callback(self, msg):
+    def joint_command_callback(self, msg: JointState) -> None:
+        """Callback for the joint command subscriber."""
         self._last_joint_command = msg
 
 
-def main():
+def main() -> None:
+    """Main script."""
     rclpy.init()
     pybullet_node = PyBulletNode()
     # TODO: Have a separate callback group for the Rate once https://github.com/ros2/rclpy/issues/850 is fixed
@@ -227,10 +270,8 @@ def main():
     rate_thread.start()
 
     try:
-        # Will this make simulation slower than real time? The default is 240Hz
-        # Max hz I can achieve is 33.3HZ
         rate = rate_node.create_rate(240)
-        while p.isConnected() and rclpy.ok():
+        while pybullet.isConnected() and rclpy.ok():
             pybullet_node.step()
             rate.sleep()
     except KeyboardInterrupt:

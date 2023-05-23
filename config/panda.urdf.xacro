@@ -5,12 +5,35 @@
 
     <pybullet>
         <camera name="wrist_camera">
+            <mode>rgbd</mode>
+            <mode>point_cloud</mode>
             <frame_name>panda_hand</frame_name>
+            <width>160</width>
+            <height>120</height>
+            <translation_from_link x="0.1" y="0.0" z="0.0" />
         </camera>
-        <!-- <camera name="left_camera"> -->
-        <!--     <frame_name>camera2</frame_name> -->
-        <!-- </camera> -->
     </pybullet>
+
+    <link name="box">
+        <visual>
+            <origin xyz="0.5 0.0 0.1" rpy="0.0 0.0 0.0" />
+            <geometry>
+                <box size="0.2 0.2 0.2" />
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0.5 0.0 0.1" rpy="0.0 0.0 0.0" />
+            <geometry>
+                <box size="0.2 0.2 0.2" />
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="box_joint" type="fixed">
+        <parent link="panda_link0" />
+        <child link="box" />
+    </joint>
+
 
     <ros2_control name="PybulletPanda" type="system">
         <hardware>
@@ -20,53 +43,53 @@
             <param name="trigger_joint_command_threshold">0.001</param>
         </hardware>
         <joint name="panda_joint1">
-            <command_interface name="position"/>
+            <command_interface name="position" />
             <state_interface name="position">
-              <param name="initial_value">0.0</param>
+                <param name="initial_value">0.0</param>
             </state_interface>
-            <state_interface name="velocity"/>
+            <state_interface name="velocity" />
         </joint>
         <joint name="panda_joint2">
-            <command_interface name="position"/>
+            <command_interface name="position" />
             <state_interface name="position">
-              <param name="initial_value">-0.785</param>
+                <param name="initial_value">-0.785</param>
             </state_interface>
-            <state_interface name="velocity"/>
+            <state_interface name="velocity" />
         </joint>
         <joint name="panda_joint3">
-            <command_interface name="position"/>
+            <command_interface name="position" />
             <state_interface name="position">
-              <param name="initial_value">0.0</param>
+                <param name="initial_value">0.0</param>
             </state_interface>
-            <state_interface name="velocity"/>
+            <state_interface name="velocity" />
         </joint>
         <joint name="panda_joint4">
-            <command_interface name="position"/>
+            <command_interface name="position" />
             <state_interface name="position">
-              <param name="initial_value">-2.356</param>
+                <param name="initial_value">-2.356</param>
             </state_interface>
-            <state_interface name="velocity"/>
+            <state_interface name="velocity" />
         </joint>
         <joint name="panda_joint5">
-            <command_interface name="position"/>
+            <command_interface name="position" />
             <state_interface name="position">
-              <param name="initial_value">0.0</param>
+                <param name="initial_value">0.0</param>
             </state_interface>
-            <state_interface name="velocity"/>
+            <state_interface name="velocity" />
         </joint>
         <joint name="panda_joint6">
-            <command_interface name="position"/>
+            <command_interface name="position" />
             <state_interface name="position">
-              <param name="initial_value">1.571</param>
+                <param name="initial_value">1.571</param>
             </state_interface>
-            <state_interface name="velocity"/>
+            <state_interface name="velocity" />
         </joint>
         <joint name="panda_joint7">
-            <command_interface name="position"/>
+            <command_interface name="position" />
             <state_interface name="position">
-              <param name="initial_value">0.785</param>
+                <param name="initial_value">0.785</param>
             </state_interface>
-            <state_interface name="velocity"/>
+            <state_interface name="velocity" />
         </joint>
     </ros2_control>
 
@@ -80,18 +103,18 @@
         <joint name="panda_finger_joint1">
             <command_interface name="position" />
             <state_interface name="position">
-              <param name="initial_value">0.0</param>
+                <param name="initial_value">0.0</param>
             </state_interface>
-            <state_interface name="velocity"/>
+            <state_interface name="velocity" />
         </joint>
         <joint name="panda_finger_joint2">
             <param name="mimic">panda_finger_joint1</param>
             <param name="multiplier">1</param>
             <command_interface name="position" />
             <state_interface name="position">
-              <param name="initial_value">0.0</param>
+                <param name="initial_value">0.0</param>
             </state_interface>
-            <state_interface name="velocity"/>
+            <state_interface name="velocity" />
         </joint>
     </ros2_control>
 </robot>
