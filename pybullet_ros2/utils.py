@@ -21,7 +21,8 @@ def normalized_robot_description(file: Path | str) -> str:
     for link in robot.links:
         for collision in link.collisions:
             if isinstance(
-                collision.geometry, Mesh,
+                collision.geometry,
+                Mesh,
             ) and collision.geometry.filename.startswith("package://"):
                 package_name, relative_path = collision.geometry.filename.split(
                     "package://",
@@ -31,7 +32,8 @@ def normalized_robot_description(file: Path | str) -> str:
                 )
         for visual in link.visuals:
             if isinstance(
-                collision.geometry, Mesh,
+                collision.geometry,
+                Mesh,
             ) and visual.geometry.filename.startswith("package://"):
                 package_name, relative_path = visual.geometry.filename.split(
                     "package://",
