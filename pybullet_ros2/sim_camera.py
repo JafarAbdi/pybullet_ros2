@@ -37,7 +37,7 @@ def from_opengl_depth_to_distance(
 
 
 # https://github.com/bulletphysics/bullet3/issues/1924#issuecomment-1091876325
-def get_point_cloud(
+def get_point_cloud(  # noqa: PLR0913
     depth: np.ndarray,
     width: int,
     height: int,
@@ -136,14 +136,10 @@ class MountedCamera:
         """Creates a simulated camera image.
 
         Args:
-          camera_position: A list of three floats. The absolute location of the camera
+          camera_parent_frame_position: A list of three floats. The absolute location of the camera's parent frame
             in the simulated world.
-          camera_orientation: A list of four floats. The orientation of the camera in
+          camera_parent_frame_orientation: A list of four floats. The orientation of the camera's parent frame in
             world frame, in quaternion.
-          resolution: A list of two integers. The horizontal and vertical resolution
-            of the camera image in pixels.
-          projection_mat: A list of 16 floats. The OpenGL projection matrix, in row
-            major.
 
         Returns:
           A tuple containing the image resolution and the array for the sythesized RGB
