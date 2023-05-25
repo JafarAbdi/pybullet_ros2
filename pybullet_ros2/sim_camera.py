@@ -37,21 +37,22 @@ def from_opengl_depth_to_distance(
 
 
 # https://github.com/bulletphysics/bullet3/issues/1924#issuecomment-1091876325
-def get_point_cloud(
+def get_point_cloud(  # noqa: PLR0913
     depth: np.ndarray,
     width: int,
     height: int,
-    view_matrix: list[float],
-    proj_matrix: list[float],
+    view_matrix: np.ndarray,
+    proj_matrix: np.ndarray,
+    camera_matrix: np.ndarray,
 ) -> np.ndarray:
     """Get the point cloud from the depth image."""
     # based on https://stackoverflow.com/questions/59128880/getting-world-coordinates-from-opengl-depth-buffer
     # "infinite" depths will have a value close to 1
 
     # create a 4x4 transform matrix that goes from pixel coordinates (and depth values) to world coordinates
-    proj_matrix = np.asarray(proj_matrix).reshape([4, 4], order="F")
-    view_matrix = np.asarray(view_matrix).reshape([4, 4], order="F")
-    tran_pix_world = np.linalg.inv(np.matmul(proj_matrix, view_matrix))
+    tran_pix_world = np.linalg.inv(camera_matrix) @ np.linalg.inv(
+        proj_matrix @ view_matrix,
+    )
 
     # create a grid with pixel coordinates and depth values
     y, x = np.mgrid[-1 : 1 : 2 / height, -1 : 1 : 2 / width]
@@ -68,78 +69,6 @@ def get_point_cloud(
     points = np.matmul(tran_pix_world, pixels.T).T
     points /= points[:, 3:4]
     return points[:, :3]
-
-
-def create_camera_image(
-    pybullet_client,  # noqa: ANN001
-    camera_position: list[float],
-    camera_orientation: list[float],
-    resolution: tuple[int, int],
-    projection_mat: list[float],
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Creates a simulated camera image.
-
-    Args:
-      pybullet_client: A pybullet client.
-      camera_position: A list of three floats. The absolute location of the camera
-        in the simulated world.
-      camera_orientation: A list of four floats. The orientation of the camera in
-        world frame, in quaternion.
-      resolution: A list of two integers. The horizontal and vertical resolution
-        of the camera image in pixels.
-      projection_mat: A list of 16 floats. The OpenGL projection matrix, in row
-        major.
-
-    Returns:
-      A tuple containing the image resolution and the array for the sythesized RGB
-      camera image.
-    """
-    camera_orientation_mat = pybullet_client.getMatrixFromQuaternion(camera_orientation)
-    camera_position = [camera_position[0], camera_position[1], camera_position[2]]
-
-    target_point = [0.0, 0.0, DEFAULT_TARGET_DISTANCE]  # w.r.t. camera frame
-
-    target_position = (
-        np.dot(
-            [
-                [
-                    camera_orientation_mat[0],
-                    camera_orientation_mat[1],
-                    camera_orientation_mat[2],
-                ],
-                [
-                    camera_orientation_mat[3],
-                    camera_orientation_mat[4],
-                    camera_orientation_mat[5],
-                ],
-                [
-                    camera_orientation_mat[6],
-                    camera_orientation_mat[7],
-                    camera_orientation_mat[8],
-                ],
-            ],
-            target_point,
-        )
-        + camera_position
-    )
-    view_mat = pybullet_client.computeViewMatrix(
-        camera_position,
-        target_position,
-        [1, 0, 0],
-    )
-    _, _, rgba, depth, _ = pybullet_client.getCameraImage(
-        resolution[0],
-        resolution[1],
-        viewMatrix=view_mat,
-        projectionMatrix=projection_mat,
-        renderer=pybullet_client.ER_BULLET_HARDWARE_OPENGL,
-        flags=pybullet_client.ER_NO_SEGMENTATION_MASK,
-    )
-    return (
-        rgba,
-        depth,
-        get_point_cloud(depth, resolution[0], resolution[1], view_mat, projection_mat),
-    )
 
 
 class MountedCamera:
@@ -199,6 +128,113 @@ class MountedCamera:
             self._far,
         )
 
+    def create_camera_image(
+        self,
+        camera_parent_frame_position: list[float],
+        camera_parent_frame_orientation: list[float],
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Creates a simulated camera image.
+
+        Args:
+          camera_parent_frame_position: A list of three floats. The absolute location of the camera's parent frame
+            in the simulated world.
+          camera_parent_frame_orientation: A list of four floats. The orientation of the camera's parent frame in
+            world frame, in quaternion.
+
+        Returns:
+          A tuple containing the image resolution and the array for the sythesized RGB
+          camera image.
+        """
+        camera_frame_transform = self._pybullet_client.multiplyTransforms(
+            camera_parent_frame_position,
+            camera_parent_frame_orientation,
+            self._relative_translation,
+            self._relative_rotation,
+        )
+        camera_frame_position = camera_frame_transform[0]
+        camera_frame_orientation = self._pybullet_client.getMatrixFromQuaternion(
+            camera_frame_transform[1],
+        )
+
+        target_point = [0.0, 0.0, DEFAULT_TARGET_DISTANCE]  # w.r.t. camera frame
+
+        target_position = (
+            np.dot(
+                [
+                    [
+                        camera_frame_orientation[0],
+                        camera_frame_orientation[1],
+                        camera_frame_orientation[2],
+                    ],
+                    [
+                        camera_frame_orientation[3],
+                        camera_frame_orientation[4],
+                        camera_frame_orientation[5],
+                    ],
+                    [
+                        camera_frame_orientation[6],
+                        camera_frame_orientation[7],
+                        camera_frame_orientation[8],
+                    ],
+                ],
+                target_point,
+            )
+            + camera_frame_position
+        )
+        view_mat = self._pybullet_client.computeViewMatrix(
+            camera_frame_position,
+            target_position,
+            [1, 0, 0],
+        )
+        _, _, rgba, depth, _ = self._pybullet_client.getCameraImage(
+            self.resolution[0],
+            self.resolution[1],
+            viewMatrix=view_mat,
+            projectionMatrix=self._projection_mat,
+            renderer=self._pybullet_client.ER_BULLET_HARDWARE_OPENGL,
+            flags=self._pybullet_client.ER_NO_SEGMENTATION_MASK,
+        )
+        camera_parent_frame_orientation_matrix = (
+            self._pybullet_client.getMatrixFromQuaternion(
+                camera_parent_frame_orientation,
+            )
+        )
+
+        return (
+            rgba,
+            depth,
+            get_point_cloud(
+                depth,
+                self.resolution[0],
+                self.resolution[1],
+                np.asarray(view_mat).reshape([4, 4], order="F"),
+                np.asarray(self._projection_mat).reshape([4, 4], order="F"),
+                np.array(
+                    [
+                        [
+                            camera_parent_frame_orientation_matrix[0],
+                            camera_parent_frame_orientation_matrix[1],
+                            camera_parent_frame_orientation_matrix[2],
+                            camera_parent_frame_position[0],
+                        ],
+                        [
+                            camera_parent_frame_orientation_matrix[3],
+                            camera_parent_frame_orientation_matrix[4],
+                            camera_parent_frame_orientation_matrix[5],
+                            camera_parent_frame_position[1],
+                        ],
+                        [
+                            camera_parent_frame_orientation_matrix[6],
+                            camera_parent_frame_orientation_matrix[7],
+                            camera_parent_frame_orientation_matrix[8],
+                            camera_parent_frame_position[2],
+                        ],
+                        [0, 0, 0, 1],
+                    ],
+                ),
+            ),
+        )
+
     def render_image(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Retrieves the camera image.
 
@@ -220,19 +256,9 @@ class MountedCamera:
             pos = parent_link_state[0]
             ori = parent_link_state[1]
 
-        transform = self._pybullet_client.multiplyTransforms(
-            pos,
-            ori,
-            self._relative_translation,
-            self._relative_rotation,
-        )
-
-        rgba, depth, point_cloud = create_camera_image(
-            pybullet_client=self._pybullet_client,
-            camera_position=transform[0],
-            camera_orientation=transform[1],
-            resolution=self._resolution,
-            projection_mat=self._projection_mat,
+        rgba, depth, point_cloud = self.create_camera_image(
+            camera_parent_frame_position=pos,
+            camera_parent_frame_orientation=ori,
         )
 
         # Converts from OpenGL depth map to a distance map (unit: meter).

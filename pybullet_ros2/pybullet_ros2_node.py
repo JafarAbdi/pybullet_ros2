@@ -218,16 +218,16 @@ class PyBulletNode(Node):
                     case CameraMode.POINTCLOUD_ROBOT_FRAME:
                         point_cloud_msg = PointCloud2()
                         point_cloud_msg.header.stamp = self.get_clock().now().to_msg()
-                        point_cloud_msg.header.frame_id = "panda_link0"
+                        point_cloud_msg.header.frame_id = camera.config.frame_name
                         point_cloud_msg.height = 1
-                        point_cloud_msg.width = (
-                            camera.config.width * camera.config.height
-                        )
+                        point_cloud_msg.width = point_cloud.shape[0]
                         point_cloud_msg.is_dense = True
                         point_cloud_msg.is_bigendian = False
                         point_cloud_msg.point_step = 12
                         point_cloud_msg.row_step = (
-                            camera.config.width * point_cloud_msg.point_step
+                            point_cloud.shape[0]
+                            * point_cloud.shape[1]
+                            * point_cloud_msg.point_step
                         )
                         point_cloud_msg.fields = [
                             PointField(
