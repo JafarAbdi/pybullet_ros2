@@ -51,7 +51,7 @@ def get_point_cloud(
 
     # create a 4x4 transform matrix that goes from pixel coordinates (and depth values) to world coordinates
     tran_pix_world = np.linalg.inv(camera_matrix) @ np.linalg.inv(
-        proj_matrix @ view_matrix
+        proj_matrix @ view_matrix,
     )
 
     # create a grid with pixel coordinates and depth values
@@ -157,7 +157,7 @@ class MountedCamera:
         )
         camera_frame_position = camera_frame_transform[0]
         camera_frame_orientation = self._pybullet_client.getMatrixFromQuaternion(
-            camera_frame_transform[1]
+            camera_frame_transform[1],
         )
 
         target_point = [0.0, 0.0, DEFAULT_TARGET_DISTANCE]  # w.r.t. camera frame
@@ -200,7 +200,7 @@ class MountedCamera:
         )
         camera_parent_frame_orientation_matrix = (
             self._pybullet_client.getMatrixFromQuaternion(
-                camera_parent_frame_orientation
+                camera_parent_frame_orientation,
             )
         )
 
@@ -234,7 +234,7 @@ class MountedCamera:
                             camera_parent_frame_position[2],
                         ],
                         [0, 0, 0, 1],
-                    ]
+                    ],
                 ),
             ),
         )
