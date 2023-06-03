@@ -2,7 +2,37 @@
 
 ## Pybullet ROS 2
 
-To run your robot with pybullet_ros2, you need to configure your robot's URDF file to use `topic_based_ros2_control/TopicBasedSystem` as the ros2_control plugin, and optionally add a `pybullet` tag to configure the pybullet simulation.
+This package provides a node that runs a pybullet simulator and publishes the joint states and camera images to ROS 2 topics. It also subscribes to the joint commands topic to control the robot in the simulation.
+
+The node have declare two parameters: 1- robot_description 2- enable_gui. The robot_description parameter is the URDF file of the robot that you want to simulate. The enable_gui parameter is a boolean that determines whether to run the simulation with or without the GUI. The default value is `True`.
+
+```python
+pybullet_node = Node(
+    package="pybullet_ros2",
+    executable="pybullet_ros2_node",
+    parameters=[
+        {"robot_description": "..."},
+        {"enable_gui": LaunchConfiguration("enable_gui")},
+    ],
+)
+```
+
+If you use `MoveItConfigsBuilder` to load your robot's URDF file, you can use it directly to load the robot in pybullet.
+
+```python
+moveit_config = MoveItConfigsBuilder("MY_ROBOT").to_moveit_configs()
+
+pybullet_node = Node(
+    package="pybullet_ros2",
+    executable="pybullet_ros2_node",
+    parameters=[
+        moveit_config.robot_description,
+        {"enable_gui": LaunchConfiguration("enable_gui")},
+    ],
+)
+```
+
+To run your robot with pybullet_ros2_node, you need to configure your robot's URDF file to use `topic_based_ros2_control/TopicBasedSystem` as the ros2_control plugin, and optionally add a `pybullet` tag to configure the simulator.
 
 ### ROS 2 Control Plugin
 
