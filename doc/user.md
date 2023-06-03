@@ -1,6 +1,6 @@
 # User Guide
 
-## Pybullet Ros2
+## Pybullet ROS 2
 
 To run your robot with pybullet_ros2, you need to configure your robot's URDF file to use `topic_based_ros2_control/TopicBasedSystem` as the ros2_control plugin, and optionally add a `pybullet` tag to configure the pybullet simulation.
 
