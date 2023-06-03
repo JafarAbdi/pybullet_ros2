@@ -32,11 +32,9 @@ pybullet_node = Node(
 )
 ```
 
-To run your robot with pybullet_ros2_node, you need to configure your robot's URDF file to use `topic_based_ros2_control/TopicBasedSystem` as the ros2_control plugin, and optionally add a `pybullet` tag to configure the simulator.
-
 ### ROS 2 Control Plugin
 
-The `topic_based_ros2_control/TopicBasedSystem` plugin is used to interface with the pybullet simulation. For more information about the plugin, please refer to the [plugin documentation](https://github.com/PickNikRobotics/topic_based_ros2_control/blob/main/doc/user.md).
+To run your robot with pybullet_ros2_node, you need to configure your robot's URDF file to use `topic_based_ros2_control/TopicBasedSystem` as the ros2_control plugin, for more information about the plugin, please refer to the [plugin documentation](https://github.com/PickNikRobotics/topic_based_ros2_control/blob/main/doc/user.md).
 
 Example URDF configuration:
 
