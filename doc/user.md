@@ -44,4 +44,3 @@ The `pybullet` tag is used to configure the pybullet simulation. You could have 
    </camera>
 </pybullet>
 ```
-
