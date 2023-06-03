@@ -1,5 +1,13 @@
 # User Guide
 
+## Demo
+
+This package provides a demo launch file that shows how to use the pybullet_ros2_node to simulate a robot in pybullet. The demo launch file loads the panda robot with a box in the scene and runs the RViz & MoveIt2's MoveGroup to control the robot in the simulation.
+
+```bash
+ros2 launch pybullet_ros2 demo.launch.py enable_gui:=true # Or enable_gui:=false if you want to run the simulation without the GUI
+```
+
 ## Pybullet ROS 2
 
 This package provides a node that runs a pybullet simulator and publishes the joint states and camera images to ROS 2 topics. It also subscribes to the joint commands topic to control the robot in the simulation.
