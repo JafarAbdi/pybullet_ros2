@@ -50,7 +50,7 @@ repos:
         args: ['--show-source', '--fix', '--config', 'pyproject.toml']
   # Spelling
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.4
+    rev: v2.2.5
     hooks:
       - id: codespell
         args: ['--write-changes',
