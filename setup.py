@@ -1,6 +1,5 @@
 """Setup script for PyBullet ROS2 package."""
 
-
 import glob
 
 from setuptools import setup
