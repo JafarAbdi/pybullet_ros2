@@ -142,7 +142,7 @@ class MountedCamera:
             world frame, in quaternion.
 
         Returns:
-          A tuple containing the image resolution and the array for the sythesized RGB
+          A tuple containing the image resolution and the array for the synthesized RGB
           camera image.
         """
         camera_frame_transform = self._pybullet_client.multiplyTransforms(
