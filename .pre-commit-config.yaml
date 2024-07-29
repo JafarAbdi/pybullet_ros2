@@ -8,7 +8,7 @@ default_language_version:
 repos:
   # Standard hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.6.0
     hooks:
       - id: check-added-large-files
       - id: check-ast
@@ -40,17 +40,17 @@ repos:
       - id: trailing-whitespace
   # Python
   - repo: https://github.com/psf/black
-    rev: 23.7.0
+    rev: 24.4.2
     hooks:
       - id: black
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.280
+    rev: v0.5.5
     hooks:
       - id: ruff
         args: ['--show-source', '--fix', '--config', 'pyproject.toml']
   # Spelling
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.5
+    rev: v2.3.0
     hooks:
       - id: codespell
         args: ['--write-changes',
@@ -59,7 +59,7 @@ repos:
                '--skip=.github/cspell/*.txt']
   # Docker
   - repo: https://github.com/hadolint/hadolint
-    rev: v2.12.1-beta
+    rev: v2.13.0-beta
     hooks:
       - id: hadolint-docker
         args: ['--config', '.github/hadolint/hadolint.yaml']

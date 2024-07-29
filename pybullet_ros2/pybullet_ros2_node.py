@@ -145,12 +145,12 @@ class PyBulletNode(Node):
                             qos_profile=qos_profile_system_default,
                         )
                     case CameraMode.POINTCLOUD_ROBOT_FRAME:
-                        publishers[
-                            CameraMode.POINTCLOUD_ROBOT_FRAME
-                        ] = self.create_publisher(
-                            PointCloud2,
-                            f"/{camera_config.name}/depth/color/points",
-                            qos_profile=qos_profile_system_default,
+                        publishers[CameraMode.POINTCLOUD_ROBOT_FRAME] = (
+                            self.create_publisher(
+                                PointCloud2,
+                                f"/{camera_config.name}/depth/color/points",
+                                qos_profile=qos_profile_system_default,
+                            )
                         )
 
             self._cameras.append(
